@@ -88,6 +88,7 @@ int main()
 		recv(client_sockfd, clientMessage, 1024, 0);
 		cout << "Client Response: ";
 		cout << clientMessage << endl;
+		
 		if(clientMessage[0] == '1')
 		{
 		    res = pthread_create(&a_thread, NULL, option_one, (void *)message);
@@ -100,48 +101,105 @@ int main()
 			perror("Thread join failed");
 			exit(EXIT_FAILURE);
 		    }
-		}		
-		if(clientMessage[0] == '5'){
+		}
+		else if(clientMessage[0] == '2')
+		{		
+		    res = pthread_create(&a_thread, NULL, option_two, (void *)message);
+		    if (res != 0) {
+			perror("Thread creation failed");
+			exit(EXIT_FAILURE);
+		    }
+		    
+		    res = pthread_join(a_thread, &thread_result);
+		    if (res != 0) {
+			perror("Thread join failed");
+			exit(EXIT_FAILURE);
+		    
+		    }
+		}
+		else if(clientMessage[0] == '3')
+		{		
+		    res = pthread_create(&a_thread, NULL, option_three, (void *)message);
+		    if (res != 0) {
+			perror("Thread creation failed");
+			exit(EXIT_FAILURE);
+		    }
+		    
+		    res = pthread_join(a_thread, &thread_result);
+		    if (res != 0) {
+			perror("Thread join failed");
+			exit(EXIT_FAILURE);
+		    
+		    }
+		}
+		else if(clientMessage[0] == '4')
+		{		
+		    res = pthread_create(&a_thread, NULL, option_four, (void *)message);
+		    if (res != 0) {
+			perror("Thread creation failed");
+			exit(EXIT_FAILURE);
+		    }
+		    
+		    res = pthread_join(a_thread, &thread_result);
+		    if (res != 0) {
+			perror("Thread join failed");
+			exit(EXIT_FAILURE);
+		    
+		    }
+		}
+		else if(clientMessage[0] == '5')
+		{			
+		    res = pthread_create(&a_thread, NULL, option_five, (void *)message);
+		    if (res != 0) {
+			    perror("Thread creation failed");
+			    exit(EXIT_FAILURE);
+			}
 			close(client_sockfd);
+			//close(server_sockfd);
 			break;
 		}
-		i++;
+		else
+		{
+		    // invalid input from client --> send err msg
+		    continue;
+		}
+		//i++;
 	}
     }
 }
 
 void *option_one(void* arg) {
     char* message1 = "The temp is dry and hot. Standard California.";
-    cout << "One Selected\n";
+    cout << "Enterd Option 1\n";
     cout << "The temp is dry and hot. Standard California." << endl;
-    sleep(3);
+    sleep(1.5);
     pthread_exit(NULL);
 }
 
 void *option_two(void *arg) {
-    cout << "One Selected\n";
+    cout << "Enterd Option 2\n";
     cout << "Pressure is on, time is running out" << endl;
-    sleep(3);
+    sleep(1.5);
     pthread_exit(NULL);
 }
 
 void *option_three(void *arg) {
-    cout << "One Selected\n";
+    cout << "Enterd Option 3\n";
     cout << "Dry as usual" << endl;
-    sleep(3);
+    sleep(1.5);
     pthread_exit(NULL);
 }
 
 void *option_four(void *arg) {
-    cout << "One Selected\n";
+    cout << "Enterd Option 4\n";
     cout << "PARTYYYY" << endl;
-    sleep(3);
+    sleep(1.5);
     pthread_exit(NULL);
 }
 
 void *option_five(void *arg) {
-    cout << "One Selected\n";
+    cout << "Enterd Option 5\n";
     cout << "Exit is currently not working" << endl;
-    sleep(3);
+    sleep(1.5);
     pthread_exit(NULL);
 }

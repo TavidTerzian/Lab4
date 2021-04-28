@@ -52,7 +52,11 @@ int main()
         cout << buffer << endl;
         scanf("%s", clientReply);
         send(sockfd, clientReply, strlen(clientReply), 0);
-        
+        //read(sockfd, buffer, 1024);
+        //cout << buffer << endl;
+        if(clientReply[0] == '5') {
+            break;
+        }
         printf("char from server = %c\n", ch);
     }
     close(sockfd);
