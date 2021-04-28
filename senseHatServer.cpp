@@ -10,11 +10,20 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
+#include <pthread.h>
 using namespace std; // so can use string 
+
+void *option_one(void *arg);
+void *option_two(void *arg);
+void *option_three(void *arg);
+void *option_four(void *arg);
+void *option_five(void *arg);
+char message[] = "Hello World";
 
 int main()
 {
-    int server_sockfd, client_sockfd; // file descriptor vars
+    int server_sockfd;
+    int client_sockfd; // file descriptor vars
     int server_len, client_len;
     // server and client addresses
     struct sockaddr_in server_address;
@@ -23,7 +32,7 @@ int main()
     socklen_t client_address_size;
     char buffer[1024] = {0};
     char clientMessage[1024] = {0};
-    
+
     //string optionsMenu = "";
     //optionsMenu += "Sense Hat Menu\n";
     //optionsMenu += "---------\n";
@@ -54,7 +63,6 @@ int main()
     // second arg is backlog - max num of connections to allow on socket
     listen(server_sockfd, 5);
     while(1) {
-        char* ch;
         string chars;
         printf("server waiting\n");
 
@@ -68,13 +76,72 @@ int main()
 
 /*  We can now read/write to client on client_sockfd.  */
         // present optionsMenu to the client
-        send(client_sockfd, optionsMenu, strlen(optionsMenu), 0);
+	    //Thread variables
+    	int res;
+    	pthread_t a_thread;
+    	void *thread_result;
+	int i = 0;
+
+	while(1){
+	        send(client_sockfd, optionsMenu, strlen(optionsMenu), 0);
         // read input from client
-        recv(client_sockfd, clientMessage, 1024, 0);
-        cout << "Client Response: ";
-        cout << clientMessage << endl;
-	ch++;
-        write(client_sockfd, &ch, 1);
-        close(client_sockfd);
+		recv(client_sockfd, clientMessage, 1024, 0);
+		cout << "Client Response: ";
+		cout << clientMessage << endl;
+		if(clientMessage[0] == '1')
+		{
+		    res = pthread_create(&a_thread, NULL, option_one, (void *)message);
+		    if (res != 0) {
+			perror("Thread creation failed");
+			exit(EXIT_FAILURE);
+		    }
+		    res = pthread_join(a_thread, &thread_result);
+		    if (res != 0) {
+			perror("Thread join failed");
+			exit(EXIT_FAILURE);
+		    }
+		}		
+		if(clientMessage[0] == '5'){
+			close(client_sockfd);
+			break;
+		}
+		i++;
+	}
     }
+}
+
+void *option_one(void* arg) {
+    char* message1 = "The temp is dry and hot. Standard California.";
+    cout << "One Selected\n";
+    cout << "The temp is dry and hot. Standard California." << endl;
+    sleep(3);
+    pthread_exit(NULL);
+}
+
+void *option_two(void *arg) {
+    cout << "One Selected\n";
+    cout << "Pressure is on, time is running out" << endl;
+    sleep(3);
+    pthread_exit(NULL);
+}
+
+void *option_three(void *arg) {
+    cout << "One Selected\n";
+    cout << "Dry as usual" << endl;
+    sleep(3);
+    pthread_exit(NULL);
+}
+
+void *option_four(void *arg) {
+    cout << "One Selected\n";
+    cout << "PARTYYYY" << endl;
+    sleep(3);
+    pthread_exit(NULL);
+}
+
+void *option_five(void *arg) {
+    cout << "One Selected\n";
+    cout << "Exit is currently not working" << endl;
+    sleep(3);
+    pthread_exit(NULL);
 }
