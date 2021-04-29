@@ -25,6 +25,7 @@ int main()
     int server_sockfd;
     int client_sockfd; // file descriptor vars
     int server_len, client_len;
+    int *arg = new int;
     // server and client addresses
     struct sockaddr_in server_address;
     struct sockaddr_in client_address;
@@ -73,6 +74,7 @@ int main()
         // server socket accepts client connection
         client_sockfd = accept(server_sockfd, 
             (struct sockaddr *)&client_address, &client_address_size);
+        *arg = client_sockfd;
 
 /*  We can now read/write to client on client_sockfd.  */
         // present optionsMenu to the client
@@ -80,7 +82,6 @@ int main()
     	int res;
     	pthread_t a_thread;
     	void *thread_result;
-	int i = 0;
 
 	while(1){
 	        send(client_sockfd, optionsMenu, strlen(optionsMenu), 0);
@@ -90,7 +91,7 @@ int main()
 		cout << clientMessage << endl;
 		if(clientMessage[0] == '1')
 		{
-		    res = pthread_create(&a_thread, NULL, option_one, (void *)message);
+		    res = pthread_create(&a_thread, NULL, option_one, &client_sockfd);
 		    if (res != 0) {
 			perror("Thread creation failed");
 			exit(EXIT_FAILURE);
@@ -105,17 +106,20 @@ int main()
 			close(client_sockfd);
 			break;
 		}
-		i++;
 	}
     }
 }
 
 void *option_one(void* arg) {
+    int tmpfd = *((int *) arg);
     char* message1 = "The temp is dry and hot. Standard California.";
+    send(tmpfd, message1, strlen(message1), 0);
+    cout << "Client fd is " << arg << endl;
     cout << "One Selected\n";
     cout << "The temp is dry and hot. Standard California." << endl;
     sleep(3);
     pthread_exit(NULL);
+    delete arg;
 }
 
 void *option_two(void *arg) {
