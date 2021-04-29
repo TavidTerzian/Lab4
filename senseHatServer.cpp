@@ -13,11 +13,12 @@
 #include <pthread.h>
 using namespace std; // so can use string 
 
-void *option_one(void *arg);
-void *option_two(void *arg);
-void *option_three(void *arg);
-void *option_four(void *arg);
-void *option_five(void *arg);
+void option_one(int fd);
+void option_two(int);
+void option_three(int);
+void option_four(int);
+void option_five(int);
+void *clientHandler(void* arg);
 char message[] = "Hello World";
 
 int main()
@@ -25,32 +26,24 @@ int main()
     //int* arg = new int;
     int arg;
     int server_sockfd;
-    int client_sockfd; // file descriptor vars
+    int client_sockfd;
+    int new_sockfd; // file descriptor vars
     int server_len, client_len;
     // server and client addresses
     struct sockaddr_in server_address;
     struct sockaddr_in client_address;
+    pthread_t a_thread;
     // size of client address - must be socklen_t data type
     socklen_t client_address_size;
-    char buffer[1024] = {0};
-    char clientMessage[1024] = {0};
-
-    //string optionsMenu = "";
-    //optionsMenu += "Sense Hat Menu\n";
-    //optionsMenu += "---------\n";
-    //optionsMenu += "1. Get Temperature\n";
-    //optionsMenu += "2. Get Pressure\n";
-    //optionsMenu += "3. Get Humidity\n";
-    //optionsMenu += "4. Set Message\n";
-    //optionsMenu += "5. Exit\n";
-    
-    char* optionsMenu = "Sense Hat Menu\n---------\n1. Get Temperature\n2. Get Pressure\n3. Get Humidity\n4. Set Message\n5. Exit\n";
+    char buffer[1024] = {0};    
     
 /*  Remove any old socket and create an unnamed socket for the server.  */
 
     unlink("server_socket");
     // init socket: [AF_INET - IPv4 protocols, SOCK_STREAM - socket type, 0 (default val) - protocol type]
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    bzero((char*) &server_address, sizeof(server_address)); 
 
 /*  Name the socket.  */
     // assign socket addr fields to server addr
@@ -59,13 +52,14 @@ int main()
     server_address.sin_port = htons(5000);
     server_len = sizeof(server_address);
     // bind server addr to socket
+
     bind(server_sockfd, (struct sockaddr *)&server_address, server_len);
 
 /*  Create a connection queue and wait for clients.  */
     // second arg is backlog - max num of connections to allow on socket
     listen(server_sockfd, 5);
     while(1) {
-        string chars;
+        int id;
         printf("server waiting\n");
 
 /*  Accept a connection.  */
@@ -73,107 +67,38 @@ int main()
         client_address_size = sizeof(client_address);
         
         // server socket accepts client connection
-        client_sockfd = accept(server_sockfd, 
+        new_sockfd = accept(server_sockfd, 
             (struct sockaddr *)&client_address, &client_address_size);
-	arg = client_sockfd;
-/*  We can now read/write to client on client_sockfd.  */
+	id = pthread_create(&a_thread, NULL, clientHandler, &new_sockfd);
+	/*  We can now read/write to client on client_sockfd.  */
         // present optionsMenu to the client
 	    //Thread variables
-    	int res;
-    	pthread_t a_thread;
-    	void *thread_result;
-	int i = 0;
+    }
+}
+
+void *clientHandler(void *arg)
+{
+	int newSock = *((int*)arg);
+	char* optionsMenu = "Sense Hat Menu\n---------\n1. Get Temperature\n2. Get Pressure\n3. Get Humidity\n4. Set Message\n5. Exit\n";
+	char clientMessage[1024] = {0};
 
 	while(1){
-	        send(client_sockfd, optionsMenu, strlen(optionsMenu), 0);
+	        send(newSock, optionsMenu, strlen(optionsMenu), 0);
         // read input from client
-		recv(client_sockfd, clientMessage, 1024, 0);
+		recv(newSock, clientMessage, 1024, 0);
 		cout << "Client Response: ";
 		cout << clientMessage << endl;
 		
 		if(clientMessage[0] == '1')
 		{
-		    res = pthread_create(&a_thread, NULL, option_one, &arg);
-		    if (res != 0) {
-			perror("Thread creation failed");
-			exit(EXIT_FAILURE);
-		    }
-		    res = pthread_join(a_thread, &thread_result);
-		    if (res != 0) {
-			perror("Thread join failed");
-			exit(EXIT_FAILURE);
-		    }
+			option_one(newSock);
 		}
-		else if(clientMessage[0] == '2')
-		{		
-		    res = pthread_create(&a_thread, NULL, option_two, &arg);
-		    if (res != 0) {
-			perror("Thread creation failed");
-			exit(EXIT_FAILURE);
-		    }
-		    
-		    res = pthread_join(a_thread, &thread_result);
-		    if (res != 0) {
-			perror("Thread join failed");
-			exit(EXIT_FAILURE);
-		    
-		    }
-		}
-		else if(clientMessage[0] == '3')
-		{		
-		    res = pthread_create(&a_thread, NULL, option_three, &arg);
-		    if (res != 0) {
-			perror("Thread creation failed");
-			exit(EXIT_FAILURE);
-		    }
-		    
-		    res = pthread_join(a_thread, &thread_result);
-		    if (res != 0) {
-			perror("Thread join failed");
-			exit(EXIT_FAILURE);
-		    
-		    }
-		}
-		else if(clientMessage[0] == '4')
-		{		
-		    res = pthread_create(&a_thread, NULL, option_four, &arg);
-		    if (res != 0) {
-			perror("Thread creation failed");
-			exit(EXIT_FAILURE);
-		    }
-		    
-		    res = pthread_join(a_thread, &thread_result);
-		    if (res != 0) {
-			perror("Thread join failed");
-			exit(EXIT_FAILURE);
-		    
-		    }
-		}
-		else if(clientMessage[0] == '5')
-		{			
-		    res = pthread_create(&a_thread, NULL, option_five, &arg);
-		    if (res != 0) {
-			    perror("Thread creation failed");
-			    exit(EXIT_FAILURE);
-			}
-			close(client_sockfd);
-			//close(server_sockfd);
-			break;
-		}
-		else
-		{
-		    // invalid input from client --> send err msg
-		    continue;
-		}
-		//i++;
 	}
-    }
 }
 
-void *option_one(void* arg) {
-    int temp_fd = *((int *) arg);
+void option_one(int fd) {
     char* message1 = "The temp is dry and hot. Standard California.\n";
-    send(temp_fd, message1, strlen(message1), 0);
+    send(fd, message1, strlen(message1), 0);
     cout << "Enterd Option 1\n";
     cout << "The temp is dry and hot. Standard California." << endl;
     sleep(1.5);
