@@ -52,7 +52,15 @@ int main()
         cout << buffer << endl;
         scanf("%s", clientReply);
         send(sockfd, clientReply, strlen(clientReply), 0);
-        
+        //read(sockfd, buffer, 1024);
+        //cout << buffer << endl;
+        char bigBuffer[3000] = {0};
+        recv(sockfd, bigBuffer, 3000, 0);
+        cout << "new buffer" << endl;
+        cout << bigBuffer << endl;
+        if(clientReply[0] == '5') {
+            break;
+        }
         printf("char from server = %c\n", ch);
     }
     close(sockfd);
