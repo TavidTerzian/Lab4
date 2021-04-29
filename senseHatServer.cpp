@@ -22,6 +22,8 @@ char message[] = "Hello World";
 
 int main()
 {
+    //int* arg = new int;
+    int arg;
     int server_sockfd;
     int client_sockfd; // file descriptor vars
     int server_len, client_len;
@@ -73,7 +75,7 @@ int main()
         // server socket accepts client connection
         client_sockfd = accept(server_sockfd, 
             (struct sockaddr *)&client_address, &client_address_size);
-
+	arg = client_sockfd;
 /*  We can now read/write to client on client_sockfd.  */
         // present optionsMenu to the client
 	    //Thread variables
@@ -91,7 +93,7 @@ int main()
 		
 		if(clientMessage[0] == '1')
 		{
-		    res = pthread_create(&a_thread, NULL, option_one, (void *)message);
+		    res = pthread_create(&a_thread, NULL, option_one, &arg);
 		    if (res != 0) {
 			perror("Thread creation failed");
 			exit(EXIT_FAILURE);
@@ -104,7 +106,7 @@ int main()
 		}
 		else if(clientMessage[0] == '2')
 		{		
-		    res = pthread_create(&a_thread, NULL, option_two, (void *)message);
+		    res = pthread_create(&a_thread, NULL, option_two, &arg);
 		    if (res != 0) {
 			perror("Thread creation failed");
 			exit(EXIT_FAILURE);
@@ -119,7 +121,7 @@ int main()
 		}
 		else if(clientMessage[0] == '3')
 		{		
-		    res = pthread_create(&a_thread, NULL, option_three, (void *)message);
+		    res = pthread_create(&a_thread, NULL, option_three, &arg);
 		    if (res != 0) {
 			perror("Thread creation failed");
 			exit(EXIT_FAILURE);
@@ -134,7 +136,7 @@ int main()
 		}
 		else if(clientMessage[0] == '4')
 		{		
-		    res = pthread_create(&a_thread, NULL, option_four, (void *)message);
+		    res = pthread_create(&a_thread, NULL, option_four, &arg);
 		    if (res != 0) {
 			perror("Thread creation failed");
 			exit(EXIT_FAILURE);
@@ -149,7 +151,7 @@ int main()
 		}
 		else if(clientMessage[0] == '5')
 		{			
-		    res = pthread_create(&a_thread, NULL, option_five, (void *)message);
+		    res = pthread_create(&a_thread, NULL, option_five, &arg);
 		    if (res != 0) {
 			    perror("Thread creation failed");
 			    exit(EXIT_FAILURE);
@@ -169,7 +171,9 @@ int main()
 }
 
 void *option_one(void* arg) {
-    char* message1 = "The temp is dry and hot. Standard California.";
+    int temp_fd = *((int *) arg);
+    char* message1 = "The temp is dry and hot. Standard California.\n";
+    send(temp_fd, message1, strlen(message1), 0);
     cout << "Enterd Option 1\n";
     cout << "The temp is dry and hot. Standard California." << endl;
     sleep(1.5);
@@ -177,6 +181,9 @@ void *option_one(void* arg) {
 }
 
 void *option_two(void *arg) {
+    int temp_fd = *((int *) arg);
+    char* message1 = "Pressure is on, time is running out\n";
+    send(temp_fd, message1, strlen(message1), 0);
     cout << "Enterd Option 2\n";
     cout << "Pressure is on, time is running out" << endl;
     sleep(1.5);
@@ -184,6 +191,9 @@ void *option_two(void *arg) {
 }
 
 void *option_three(void *arg) {
+    int temp_fd = *((int *) arg);
+    char* message1 = "Dry as usual\n";
+    send(temp_fd, message1, strlen(message1), 0);
     cout << "Enterd Option 3\n";
     cout << "Dry as usual" << endl;
     sleep(1.5);
@@ -191,6 +201,9 @@ void *option_three(void *arg) {
 }
 
 void *option_four(void *arg) {
+    int temp_fd = *((int *) arg);
+    char* message1 = "PARTYYYY\n";
+    send(temp_fd, message1, strlen(message1), 0);
     cout << "Enterd Option 4\n";
     cout << "PARTYYYY" << endl;
     sleep(1.5);
@@ -198,6 +211,9 @@ void *option_four(void *arg) {
 }
 
 void *option_five(void *arg) {
+    int temp_fd = *((int *) arg);
+    char* message1 = "Exit is currently not working\n";
+    send(temp_fd, message1, strlen(message1), 0);
     cout << "Enterd Option 5\n";
     cout << "Exit is currently not working" << endl;
     sleep(1.5);
