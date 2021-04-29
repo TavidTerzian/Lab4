@@ -14,10 +14,10 @@
 using namespace std; // so can use string 
 
 void option_one(int fd);
-void option_two(int);
-void option_three(int);
-void option_four(int);
-void option_five(int);
+void option_two(int fd);
+void option_three(int fd);
+void option_four(int fd);
+void option_five(int fds);
 void *clientHandler(void* arg);
 char message[] = "Hello World";
 
@@ -89,10 +89,32 @@ void *clientHandler(void *arg)
 		cout << "Client Response: ";
 		cout << clientMessage << endl;
 		
-		if(clientMessage[0] == '1')
-		{
-			option_one(newSock);
-		}
+        switch(clientMessage[0]) {
+            case '1': 
+            {
+                option_one(newSock);
+            } break;
+            case '2': 
+            {
+                option_two(newSock);
+            } break;
+            case '3': 
+            {
+                option_three(newSock);
+            } break;
+            case '4': 
+            {
+                option_four(newSock);
+            } break;
+            case '5': 
+            {
+                option_four(newSock);
+            } break;
+            default:
+            {
+                cerr << "Invalid input" << endl;
+            } break;
+        }
 	}
 }
 
@@ -102,45 +124,41 @@ void option_one(int fd) {
     cout << "Enterd Option 1\n";
     cout << "The temp is dry and hot. Standard California." << endl;
     sleep(1.5);
-    pthread_exit(NULL);
+    //pthread_exit(NULL);
 }
 
-void *option_two(void *arg) {
-    int temp_fd = *((int *) arg);
+void option_two(int fd) {
     char* message1 = "Pressure is on, time is running out\n";
-    send(temp_fd, message1, strlen(message1), 0);
+    send(fd, message1, strlen(message1), 0);
     cout << "Enterd Option 2\n";
     cout << "Pressure is on, time is running out" << endl;
     sleep(1.5);
-    pthread_exit(NULL);
+    //pthread_exit(NULL);
 }
 
-void *option_three(void *arg) {
-    int temp_fd = *((int *) arg);
+void option_three(int fd) {
     char* message1 = "Dry as usual\n";
-    send(temp_fd, message1, strlen(message1), 0);
+    send(fd, message1, strlen(message1), 0);
     cout << "Enterd Option 3\n";
     cout << "Dry as usual" << endl;
     sleep(1.5);
-    pthread_exit(NULL);
+    //pthread_exit(NULL);
 }
 
-void *option_four(void *arg) {
-    int temp_fd = *((int *) arg);
+void option_four(int fd) {
     char* message1 = "PARTYYYY\n";
-    send(temp_fd, message1, strlen(message1), 0);
+    send(fd, message1, strlen(message1), 0);
     cout << "Enterd Option 4\n";
     cout << "PARTYYYY" << endl;
     sleep(1.5);
-    pthread_exit(NULL);
+    //pthread_exit(NULL);
 }
 
-void *option_five(void *arg) {
-    int temp_fd = *((int *) arg);
+void option_five(int fd) {
     char* message1 = "Exit is currently not working\n";
-    send(temp_fd, message1, strlen(message1), 0);
+    send(fd, message1, strlen(message1), 0);
     cout << "Enterd Option 5\n";
     cout << "Exit is currently not working" << endl;
     sleep(1.5);
-    pthread_exit(NULL);
+    //pthread_exit(NULL);
 }
