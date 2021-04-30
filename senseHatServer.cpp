@@ -9,8 +9,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <iostream>
+#include <cstring>
 #include <string>
 #include <pthread.h>
+#include <Python.h>
 using namespace std; // so can use string 
 
 void option_one(int fd);
@@ -19,6 +21,7 @@ void option_three(int fd);
 void option_four(int fd);
 void option_five(int fds);
 void *clientHandler(void* arg);
+double getTemperature(PyObject *pModule);
 char message[] = "Hello World";
 
 int main()
@@ -54,7 +57,7 @@ int main()
     // bind server addr to socket
 
     bind(server_sockfd, (struct sockaddr *)&server_address, server_len);
-
+    option_one(0);
 /*  Create a connection queue and wait for clients.  */
     // second arg is backlog - max num of connections to allow on socket
     listen(server_sockfd, 5);
@@ -69,7 +72,7 @@ int main()
         // server socket accepts client connection
         new_sockfd = accept(server_sockfd, 
             (struct sockaddr *)&client_address, &client_address_size);
-	id = pthread_create(&a_thread, NULL, clientHandler, &new_sockfd);
+        id = pthread_create(&a_thread, NULL, clientHandler, &new_sockfd);
 	/*  We can now read/write to client on client_sockfd.  */
         // present optionsMenu to the client
 	    //Thread variables
@@ -83,7 +86,7 @@ void *clientHandler(void *arg)
 	char clientMessage[1024] = {0};
 
 	while(1){
-	        send(newSock, optionsMenu, strlen(optionsMenu), 0);
+        send(newSock, optionsMenu, strlen(optionsMenu), 0);
         // read input from client
 		recv(newSock, clientMessage, 1024, 0);
 		cout << "Client Response: ";
@@ -119,12 +122,28 @@ void *clientHandler(void *arg)
 }
 
 void option_one(int fd) {
+    Py_Initialize();
+    PyObject *sys = PyImport_ImportModule("sys");
+    PyObject *path = PyObject_GetAttrString(sys, "path");
+    PyList_Append(path, PyUnicode_FromString("."));
+    PyObject *pName = PyUnicode_FromString("senseHatModules");
+    if (pName == NULL) {
+        PyErr_Print();
+    }
+
+    PyObject *pModule = PyImport_Import(pName);
+    if (pModule == NULL) {
+        PyErr_Print();
+    }
     char* message1 = "The temp is dry and hot. Standard California.\n";
-    send(fd, message1, strlen(message1), 0);
-    cout << "Enterd Option 1\n";
-    cout << "The temp is dry and hot. Standard California." << endl;
+    string tempString = std::to_string(getTemperature(pModule));
+    cout << tempString << endl;
+    //har* message = new char[tempString.length() + 1];
+    const char* message = tempString.c_str();
+    cout << message << endl;
+    cout << "The temp is dry and hot. Standard California.\n";
     sleep(1.5);
-    //pthread_exit(NULL);
+    Py_Finalize();
 }
 
 void option_two(int fd) {
@@ -161,4 +180,24 @@ void option_five(int fd) {
     cout << "Exit is currently not working" << endl;
     sleep(1.5);
     //pthread_exit(NULL);
+}
+
+double getTemperature(PyObject *pModule)
+{
+
+    double temperature = 0.0;
+
+    PyObject *pFunc = PyObject_GetAttrString(pModule, "getTemperature");
+    if (pFunc && PyCallable_Check(pFunc)) {
+        PyObject *pValue = PyObject_CallObject(pFunc, NULL);
+	temperature = PyFloat_AsDouble(pValue);
+	Py_DECREF(pValue);
+    } else {
+	PyErr_Print();
+    }
+
+    Py_DECREF(pFunc);
+
+    return temperature;
+
 }

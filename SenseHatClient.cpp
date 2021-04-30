@@ -58,6 +58,10 @@ int main()
         recv(sockfd, bigBuffer, 3000, 0);
         cout << "new buffer" << endl;
         cout << bigBuffer << endl;
+        //while(recv(sockfd, bigBuffer, 3000, 0) > 0) {
+            //cout << "new buffer" << endl;
+            //cout << bigBuffer << endl;
+        //}
         if(clientReply[0] == '5') {
             break;
         }
