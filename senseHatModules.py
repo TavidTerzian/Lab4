@@ -13,3 +13,21 @@ def getTemperature():
 
     return temperature
 
+def getPressure():
+    from sense_emu import SenseHat
+    sense = SenseHat()
+    
+    sense.clear()
+    pressure = sense.get_pressure()
+    
+    return pressure
+
+def getHumidity():
+    from sense_emu import SenseHat
+    sense = SenseHat()
+    
+    sense.clear()
+    humidity = sense.get_humidity()
+    
+    return humidity
+
