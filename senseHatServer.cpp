@@ -22,6 +22,8 @@ void option_four(int fd);
 void option_five(int fds);
 void *clientHandler(void* arg);
 double getTemperature(PyObject *pModule);
+double getPressure(PyObject *pModule);
+double getHumidity(PyObject *pModule);
 char message[] = "Hello World";
 
 int main()
@@ -163,19 +165,55 @@ void option_one(int fd) {
 }
 
 void option_two(int fd) {
-    char* message1 = "Pressure is on, time is running out\n";
-    send(fd, message1, strlen(message1), 0);
-    cout << "Enterd Option 2\n";
-    cout << "Pressure is on, time is running out" << endl;
+    PyObject *sys = PyImport_ImportModule("sys");
+    PyObject *path = PyObject_GetAttrString(sys, "path");
+    PyList_Append(path, PyUnicode_FromString("."));
+    PyObject *pName = PyUnicode_FromString("senseHatModules");
+    if (pName == NULL) {
+        PyErr_Print();
+    }
+
+    PyObject *pModule = PyImport_Import(pName);
+    if (pModule == NULL) {
+        PyErr_Print();
+    }
+    string tempString = std::to_string(getPressure(pModule));
+    cout << tempString << endl;
+    const char* message = tempString.c_str();
+    char* mod_message = strdup(message);
+    cout << mod_message << endl;
+    int n_send = send(fd, mod_message, strlen(mod_message), 0);
+    if(n_send < 0) {
+        cerr << "Error in sending to client" << endl;
+       printf("Value of errno: %d\n", errno);
+    }
     sleep(1.5);
     //pthread_exit(NULL);
 }
 
 void option_three(int fd) {
-    char* message1 = "Dry as usual\n";
-    send(fd, message1, strlen(message1), 0);
-    cout << "Enterd Option 3\n";
-    cout << "Dry as usual" << endl;
+    PyObject *sys = PyImport_ImportModule("sys");
+    PyObject *path = PyObject_GetAttrString(sys, "path");
+    PyList_Append(path, PyUnicode_FromString("."));
+    PyObject *pName = PyUnicode_FromString("senseHatModules");
+    if (pName == NULL) {
+        PyErr_Print();
+    }
+
+    PyObject *pModule = PyImport_Import(pName);
+    if (pModule == NULL) {
+        PyErr_Print();
+    }
+    string tempString = std::to_string(getHumidity(pModule));
+    cout << tempString << endl;
+    const char* message = tempString.c_str();
+    char* mod_message = strdup(message);
+    cout << mod_message << endl;
+    int n_send = send(fd, mod_message, strlen(mod_message), 0);
+    if(n_send < 0) {
+        cerr << "Error in sending to client" << endl;
+       printf("Value of errno: %d\n", errno);
+    }
     sleep(1.5);
     //pthread_exit(NULL);
 }
@@ -215,5 +253,45 @@ double getTemperature(PyObject *pModule)
     Py_DECREF(pFunc);
 
     return temperature;
+
+}
+
+double getPressure(PyObject *pModule)
+{
+
+    double pressure = 0.0;
+
+    PyObject *pFunc = PyObject_GetAttrString(pModule, "getPressure");
+    if (pFunc && PyCallable_Check(pFunc)) {
+        PyObject *pValue = PyObject_CallObject(pFunc, NULL);
+	pressure = PyFloat_AsDouble(pValue);
+	Py_DECREF(pValue);
+    } else {
+	PyErr_Print();
+    }
+
+    Py_DECREF(pFunc);
+
+    return pressure;
+
+}
+
+double getHumidity(PyObject *pModule)
+{
+
+    double humidity = 0.0;
+
+    PyObject *pFunc = PyObject_GetAttrString(pModule, "getHumidity");
+    if (pFunc && PyCallable_Check(pFunc)) {
+        PyObject *pValue = PyObject_CallObject(pFunc, NULL);
+	humidity = PyFloat_AsDouble(pValue);
+	Py_DECREF(pValue);
+    } else {
+	PyErr_Print();
+    }
+
+    Py_DECREF(pFunc);
+
+    return humidity;
 
 }
