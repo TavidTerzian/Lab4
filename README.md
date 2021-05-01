@@ -10,12 +10,14 @@
   - Console arguments [ip address, port number]
   
 ## Instructions to run the program:
-  -Compile the Server with g++ using this specific command:
-  g++ senseHatServer.cpp ipAddressArg portNumberArg -o Server -I /usr/include/python2.7/ $(/usr/bin/python2.7-config --ldflags) -w
-  where ipAddressArg amd portNumberArg is the desired ip address and port number to be used for the socket connection
-  - Run the Server 
-  - Compile the client with g++ using this command:
+  - **Compile the Server with g++ using this specific command**:
+  g++ senseHatServer.cpp  -o Server -I /usr/include/python2.7/ $(/usr/bin/python2.7-config --ldflags) -w
+  - **Run the Server** 
+  - ./Server
+  - **Compile the client with g++ using this command:**
   g++ SenseHatClient.cpp -o Client -I /usr/include/python2.7/ $(/usr/bin/python2.7-config --ldflags) -w
+  - **Run the Client with this command:** ./Client ipAddressArg portNumberArg 
+  * where ipAddressArg amd portNumberArg is the desired ip address and port number to be used for the socket connection  
   
 ## Sources:
   - C Bind: https://man7.org/linux/man-pages/man2/bind.2.html
