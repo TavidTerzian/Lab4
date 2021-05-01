@@ -48,20 +48,20 @@ int main()
 
     // keep the client connected until user wants to quit
     while(result == 0) {
+        cout << "HERE" << endl;
+        // read in buffer
         read(sockfd, buffer, 1024);
+        // print buffer to client console
         cout << buffer << endl;
+        // get client response
         scanf("%s", clientReply);
+        // send client response
         send(sockfd, clientReply, strlen(clientReply), 0);
-        //read(sockfd, buffer, 1024);
-        //cout << buffer << endl;
         char bigBuffer[3000] = {0};
         recv(sockfd, bigBuffer, 3000, 0);
-        cout << "new buffer" << endl;
+        read(sockfd, bigBuffer, 3000);
+        cout << "Response From Server" << endl;
         cout << bigBuffer << endl;
-        //while(recv(sockfd, bigBuffer, 3000, 0) > 0) {
-            //cout << "new buffer" << endl;
-            //cout << bigBuffer << endl;
-        //}
         if(clientReply[0] == '5') {
             break;
         }

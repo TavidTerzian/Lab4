@@ -24,6 +24,7 @@ void *clientHandler(void* arg);
 double getTemperature(PyObject *pModule);
 double getPressure(PyObject *pModule);
 double getHumidity(PyObject *pModule);
+void sendMessage(PyObject *pModule, const char* message);
 char message[] = "Hello World";
 
 int main()
@@ -59,8 +60,10 @@ int main()
     server_len = sizeof(server_address);
     // bind server addr to socket
 
-    bind(server_sockfd, (struct sockaddr *)&server_address, server_len);
-
+    int n_bind = bind(server_sockfd, (struct sockaddr *)&server_address, server_len);
+    if(n_bind < 0) {
+        cerr << "Err with binding\n";
+    }
 /*  Create a connection queue and wait for clients.  */
     // second arg is backlog - max num of connections to allow on socket
     listen(server_sockfd, 5);
@@ -92,7 +95,10 @@ void *clientHandler(void *arg)
 	char clientMessage[1024] = {0};
 
 	while(1){
-        send(newSock, optionsMenu, strlen(optionsMenu), 0);
+        int n_send = send(newSock, optionsMenu, strlen(optionsMenu), 0);
+        if(n_send) {
+            cerr << "Error in sending options to client\n";
+        }
         // read input from client
         char exampleRes = '1';
         int sizeBuff = sizeof(exampleRes);
@@ -124,7 +130,7 @@ void *clientHandler(void *arg)
             case '5': 
             {
                 end = true;
-                option_four(newSock);
+                option_five(newSock);
             } break;
             default:
             {
@@ -134,7 +140,6 @@ void *clientHandler(void *arg)
         }
         if(end)
             break;
-        break;
 	}
 }
 
@@ -156,6 +161,8 @@ void option_one(int fd) {
     const char* message = tempString.c_str();
     char* mod_message = strdup(message);
     cout << mod_message << endl;
+    const char* title = "Temperature: \n";
+    send(fd, title, strlen(title), 0);
     int n_send = send(fd, mod_message, strlen(mod_message), 0);
     if(n_send < 0) {
         cerr << "Error in sending to client" << endl;
@@ -182,13 +189,14 @@ void option_two(int fd) {
     const char* message = tempString.c_str();
     char* mod_message = strdup(message);
     cout << mod_message << endl;
+    const char* title = "Pressure: \n";
+    send(fd, title, strlen(title), 0);
     int n_send = send(fd, mod_message, strlen(mod_message), 0);
     if(n_send < 0) {
         cerr << "Error in sending to client" << endl;
        printf("Value of errno: %d\n", errno);
     }
     sleep(1.5);
-    //pthread_exit(NULL);
 }
 
 void option_three(int fd) {
@@ -209,31 +217,43 @@ void option_three(int fd) {
     const char* message = tempString.c_str();
     char* mod_message = strdup(message);
     cout << mod_message << endl;
+    const char* title = "Humidity: \n";
+    send(fd, title, strlen(title), 0);
     int n_send = send(fd, mod_message, strlen(mod_message), 0);
     if(n_send < 0) {
         cerr << "Error in sending to client" << endl;
        printf("Value of errno: %d\n", errno);
     }
     sleep(1.5);
-    //pthread_exit(NULL);
 }
 
 void option_four(int fd) {
-    char* message1 = "PARTYYYY\n";
-    send(fd, message1, strlen(message1), 0);
-    cout << "Enterd Option 4\n";
-    cout << "PARTYYYY" << endl;
+    PyObject *sys = PyImport_ImportModule("sys");
+    PyObject *path = PyObject_GetAttrString(sys, "path");
+    PyList_Append(path, PyUnicode_FromString("."));
+    PyObject *pName = PyUnicode_FromString("senseHatModules");
+    if (pName == NULL) {
+        PyErr_Print();
+    }
+
+    PyObject *pModule = PyImport_Import(pName);
+    if (pModule == NULL) {
+        PyErr_Print();
+    }
+    const char* sampleMsg = "message";
+    const char* title = "Look at Rasp Pi For Message: \n";
+    send(fd, title, strlen(title), 0);
+    sendMessage(pModule, sampleMsg);
     sleep(1.5);
     //pthread_exit(NULL);
 }
 
 void option_five(int fd) {
-    char* message1 = "Exit is currently not working\n";
-    send(fd, message1, strlen(message1), 0);
-    cout << "Enterd Option 5\n";
-    cout << "Exit is currently not working" << endl;
+    const char* title = "Terminated Program. Goodbye.\n";
+    send(fd, title, strlen(title), 0);
     sleep(1.5);
-    //pthread_exit(NULL);
+    pthread_exit(NULL);
+    exit(EXIT_SUCCESS);
 }
 
 double getTemperature(PyObject *pModule)
@@ -293,5 +313,32 @@ double getHumidity(PyObject *pModule)
     Py_DECREF(pFunc);
 
     return humidity;
+
+}
+void sendMessage(PyObject *pModule, const char* message)
+{
+    PyObject *pFunc = PyObject_GetAttrString(pModule, "sendMsg");
+    // attr - temp static argument to pass to Python sendMessage
+    const char* attr = "message";
+    // convert the char array to PyObject type
+    PyObject *stringObjectArg = PyBytes_FromStringAndSize(attr, sizeof(attr) * 2);
+    int res = PyObject_IsTrue(stringObjectArg);
+    // checking if it was converted correctly
+    if(res == 1){
+        cout << "converted" << endl;
+    }
+    else {
+        cout << "not converted" << endl;
+    }
+    if (pFunc && PyCallable_Check(pFunc)) {
+        // pass the Python object as a 2nd argument
+        PyObject_CallObject(pFunc, stringObjectArg);
+    } 
+    else {
+        PyErr_Print();
+    }
+
+    Py_DECREF(pFunc);
+
 
 }

@@ -1,4 +1,4 @@
-def helloMsg(message):
+def sendMsg(message):
     from sense_emu import SenseHat
     sense = SenseHat()
 
