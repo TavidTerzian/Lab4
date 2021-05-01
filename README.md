@@ -25,8 +25,8 @@
   - C c_str: https://www.cplusplus.com/reference/string/string/c_str/
   - C strdup: https://man7.org/linux/man-pages/man3/strdup.3.html
   - Python2.7 Object Protocol for C/C++: https://docs.python.org/2.7/c-api/object.html
-  -Linux Man page: https://linux.die.net/man/3/syslog  
-  -GNU: https://www.gnu.org/software/libc/manual/html_node/Syslog-Example.html
+  - Linux Man page: https://linux.die.net/man/3/syslog  
+  - GNU: https://www.gnu.org/software/libc/manual/html_node/Syslog-Example.html
   
  ## Relevant Source Files:
   - senseHatServer.cpp
