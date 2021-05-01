@@ -28,4 +28,10 @@
   -Linux Man page: https://linux.die.net/man/3/syslog  
   -GNU: https://www.gnu.org/software/libc/manual/html_node/Syslog-Example.html
   
+ ## Relevant Source Files:
+  - senseHatServer.cpp
+  - SenseHatClient.cpp
+  - senseHatModules.py
+  - senseHatModules.pyc
+  - *Please ignore other files
   
