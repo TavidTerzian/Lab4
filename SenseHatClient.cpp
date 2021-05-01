@@ -13,14 +13,18 @@
 #include <string>
 using namespace std;
 
-int main()
+int main(int argc, char * argv[])
 {
+    if(argc != 3){
+        printf("Error: Please provide an IP and Port\n");
+        exit(EXIT_FAILURE);
+    }
     int sockfd;
     int len;
     struct sockaddr_in address;
     int result;
-    char ch = 'A';
-    char* ip = "10.0.2.15";
+    char* ip = argv[1];
+    int port = atoi(argv[2]);
     char buffer[1024] = {0};
     char clientReply[1024] = {0};
 
@@ -31,7 +35,7 @@ int main()
 /*  Name the socket, as agreed with the server.  */
 
     address.sin_family = AF_INET;
-    address.sin_port = htons(5000);
+    address.sin_port = htons(port);
     inet_pton(AF_INET, ip, &address.sin_addr);
     len = sizeof(address);
 
@@ -48,24 +52,39 @@ int main()
 
     // keep the client connected until user wants to quit
     while(result == 0) {
-        cout << "HERE" << endl;
+        char bigBuffer[3000] = {0};
         // read in buffer
         read(sockfd, buffer, 1024);
         // print buffer to client console
         cout << buffer << endl;
         // get client response
         scanf("%s", clientReply);
-        // send client response
-        send(sockfd, clientReply, strlen(clientReply), 0);
-        char bigBuffer[3000] = {0};
-        recv(sockfd, bigBuffer, 3000, 0);
-        read(sockfd, bigBuffer, 3000);
-        cout << "Response From Server" << endl;
-        cout << bigBuffer << endl;
-        if(clientReply[0] == '5') {
-            break;
+        if(clientReply[0] == '1' || clientReply[0] == '2' || clientReply[0] == '3' || clientReply[0] == '4' || clientReply[0] == '5')
+        { 
+            if(clientReply[0] == '4'){
+                send(sockfd, clientReply, strlen(clientReply), 0);
+                read(sockfd, bigBuffer, 3000);
+                cout << bigBuffer << endl;
+                scanf("%s", clientReply);
+                send(sockfd, clientReply, strlen(clientReply), 0);
+            }
+            else
+            {
+                // send client response
+                send(sockfd, clientReply, strlen(clientReply), 0);
+                read(sockfd, bigBuffer, 3000);
+                cout << "Response From Server" << endl;
+                cout << bigBuffer << endl << endl;
+                if(clientReply[0] == '5') {
+                    break;
+                }
+            }
         }
-        printf("char from server = %c\n", ch);
+        else
+        {
+            send(sockfd, clientReply, strlen(clientReply), 0);
+            cout << "Pick a valid option. 1, 2, 3, 4, or 5. Enter a single digit.\n";
+        }
     }
     close(sockfd);
     exit(0);

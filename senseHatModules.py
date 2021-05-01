@@ -3,6 +3,8 @@ def sendMsg(message):
     sense = SenseHat()
 
     sense.show_message(message)
+    
+    return 1;
 
 def getTemperature():
     from sense_emu import SenseHat

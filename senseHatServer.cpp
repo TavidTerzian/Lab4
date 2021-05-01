@@ -25,7 +25,6 @@ double getTemperature(PyObject *pModule);
 double getPressure(PyObject *pModule);
 double getHumidity(PyObject *pModule);
 void sendMessage(PyObject *pModule, const char* message);
-char message[] = "Hello World";
 
 int main()
 {
@@ -95,10 +94,7 @@ void *clientHandler(void *arg)
 	char clientMessage[1024] = {0};
 
 	while(1){
-        int n_send = send(newSock, optionsMenu, strlen(optionsMenu), 0);
-        if(n_send) {
-            cerr << "Error in sending options to client\n";
-        }
+        send(newSock, optionsMenu, strlen(optionsMenu), 0);
         // read input from client
         char exampleRes = '1';
         int sizeBuff = sizeof(exampleRes);
@@ -134,7 +130,6 @@ void *clientHandler(void *arg)
             } break;
             default:
             {
-                end = true;
                 cerr << "Invalid input" << endl;
             } break;
         }
@@ -156,16 +151,11 @@ void option_one(int fd) {
     if (pModule == NULL) {
         PyErr_Print();
     }
-    string tempString = std::to_string(getTemperature(pModule));
-    cout << tempString << endl;
+    string tempString = "Temperature: " + std::to_string(getTemperature(pModule));
     const char* message = tempString.c_str();
     char* mod_message = strdup(message);
-    cout << mod_message << endl;
-    const char* title = "Temperature: \n";
-    send(fd, title, strlen(title), 0);
-    int n_send = send(fd, mod_message, strlen(mod_message), 0);
-    if(n_send < 0) {
-        cerr << "Error in sending to client" << endl;
+    if(send(fd, mod_message, strlen(mod_message), 0) < 0) {
+        cerr << "Error in sending to client option 1" << endl;
        printf("Value of errno: %d\n", errno);
     }
     sleep(1.5);
@@ -184,15 +174,10 @@ void option_two(int fd) {
     if (pModule == NULL) {
         PyErr_Print();
     }
-    string tempString = std::to_string(getPressure(pModule));
-    cout << tempString << endl;
+    string tempString = "Pressure: " + std::to_string(getPressure(pModule));
     const char* message = tempString.c_str();
     char* mod_message = strdup(message);
-    cout << mod_message << endl;
-    const char* title = "Pressure: \n";
-    send(fd, title, strlen(title), 0);
-    int n_send = send(fd, mod_message, strlen(mod_message), 0);
-    if(n_send < 0) {
+    if(send(fd, mod_message, strlen(mod_message), 0) < 0) {
         cerr << "Error in sending to client" << endl;
        printf("Value of errno: %d\n", errno);
     }
@@ -212,15 +197,10 @@ void option_three(int fd) {
     if (pModule == NULL) {
         PyErr_Print();
     }
-    string tempString = std::to_string(getHumidity(pModule));
-    cout << tempString << endl;
+    string tempString = "Humidity: " + std::to_string(getHumidity(pModule));
     const char* message = tempString.c_str();
     char* mod_message = strdup(message);
-    cout << mod_message << endl;
-    const char* title = "Humidity: \n";
-    send(fd, title, strlen(title), 0);
-    int n_send = send(fd, mod_message, strlen(mod_message), 0);
-    if(n_send < 0) {
+    if(send(fd, mod_message, strlen(mod_message), 0) < 0) {
         cerr << "Error in sending to client" << endl;
        printf("Value of errno: %d\n", errno);
     }
@@ -228,6 +208,7 @@ void option_three(int fd) {
 }
 
 void option_four(int fd) {
+    char bigBuffer[3000] = {0};
     PyObject *sys = PyImport_ImportModule("sys");
     PyObject *path = PyObject_GetAttrString(sys, "path");
     PyList_Append(path, PyUnicode_FromString("."));
@@ -240,12 +221,12 @@ void option_four(int fd) {
     if (pModule == NULL) {
         PyErr_Print();
     }
-    const char* sampleMsg = "message";
-    const char* title = "Look at Rasp Pi For Message: \n";
+    const char* title = "Enter your message.";
     send(fd, title, strlen(title), 0);
-    sendMessage(pModule, sampleMsg);
+    read(fd, bigBuffer, 3000);
+    cout << "Debug: Message from client = " << bigBuffer << endl;
+    sendMessage(pModule, bigBuffer);
     sleep(1.5);
-    //pthread_exit(NULL);
 }
 
 void option_five(int fd) {
@@ -253,7 +234,6 @@ void option_five(int fd) {
     send(fd, title, strlen(title), 0);
     sleep(1.5);
     pthread_exit(NULL);
-    exit(EXIT_SUCCESS);
 }
 
 double getTemperature(PyObject *pModule)
@@ -317,22 +297,17 @@ double getHumidity(PyObject *pModule)
 }
 void sendMessage(PyObject *pModule, const char* message)
 {
+    double worked;
     PyObject *pFunc = PyObject_GetAttrString(pModule, "sendMsg");
     // attr - temp static argument to pass to Python sendMessage
-    const char* attr = "message";
-    // convert the char array to PyObject type
-    PyObject *stringObjectArg = PyBytes_FromStringAndSize(attr, sizeof(attr) * 2);
-    int res = PyObject_IsTrue(stringObjectArg);
-    // checking if it was converted correctly
-    if(res == 1){
-        cout << "converted" << endl;
-    }
-    else {
-        cout << "not converted" << endl;
-    }
+    PyObject *stringObjectArg = PyBytes_FromStringAndSize(message, sizeof(message) * 2);
     if (pFunc && PyCallable_Check(pFunc)) {
         // pass the Python object as a 2nd argument
-        PyObject_CallObject(pFunc, stringObjectArg);
+        PyObject *pValue = PyObject_CallObject(pFunc, stringObjectArg);
+        worked = PyFloat_AsDouble(pValue);
+        if(worked = 1){
+            cout << "Sense show message called\nMessage was: " << message << endl;
+        }
     } 
     else {
         PyErr_Print();
