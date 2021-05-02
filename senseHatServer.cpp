@@ -20,6 +20,7 @@ void option_two(int fd, int sense_hat_choice);
 void option_three(int fd, int sense_hat_choice);
 void option_four(int fd, int sense_hat_choice);
 void option_five(int fds);
+void *emu_clientHandler(void* arg);
 void *clientHandler(void* arg);
 double getTemperature(PyObject *pModule, int sense_hat_choice);
 double getPressure(PyObject *pModule, int sense_hat_choice);
@@ -29,16 +30,25 @@ void sendMessage(PyObject *pModule, const char* message, int sense_hat_choice);
 
 int main(int argc, char * argv[])
 {
-    if(argc != 3){
+    if(argc != 3 && argc != 4){
         printf("Error: Please provide an IP and Port\n");
         exit(EXIT_FAILURE);
     }
 
     Py_Initialize();
-
+    // by default the program assumes a real sense hat is being used unless a -e option is passed as an arg
+    int sense_hat_choice = 0;
     int arg;
     char* argIpAddress = argv[1];
     int argPort = atoi(argv[2]);
+    char* argEmu;
+    if(argc == 4){
+        argEmu = argv[3];
+        if(argEmu[0] == '-' && argEmu[1] == 'e'){
+            sense_hat_choice = 1;
+            cout << "EMU OPTION" << endl;
+        }
+    }
     int server_sockfd;
     int client_sockfd;
     int new_sockfd; // file descriptor vars
@@ -50,7 +60,6 @@ int main(int argc, char * argv[])
     // size of client address - must be socklen_t data type
     socklen_t client_address_size;
     char buffer[1024] = {0};
-    
     //int sense_hat_choice = 1;
     
 /*  Remove any old socket and create an unnamed socket for the server.  */
@@ -90,7 +99,12 @@ int main(int argc, char * argv[])
             (struct sockaddr *)&client_address, &client_address_size);
         if(new_sockfd < 0)
             break;
-        id = pthread_create(&a_thread, NULL, clientHandler, &new_sockfd);
+        if(sense_hat_choice == 0){
+            id = pthread_create(&a_thread, NULL, clientHandler, &new_sockfd);
+        }
+        else if(sense_hat_choice == 1) {
+            id = pthread_create(&a_thread, NULL, emu_clientHandler, &new_sockfd);
+        }
 	/*  We can now read/write to client on client_sockfd.  */
         // present optionsMenu to the client
 	    //Thread variables
@@ -106,16 +120,62 @@ void *clientHandler(void *arg)
 	char clientMessage[1024] = {0};
 
 	while(1){
-        char sense_hat_choice = 1;
-        char tempChar[1] = {'1'};
-        char* senseHatChoiceMsg = "Please enter 0 if using an actual physical sense hat\nOr enter 1 if using a sense hat emulator";
-        send(newSock, senseHatChoiceMsg, strlen(senseHatChoiceMsg), 0);
-        recv(newSock, tempChar, 1024, 0);
-        sense_hat_choice = (int)(tempChar[0]);
+        const int sense_hat_choice = 0;
         
-        // flush socket before sending message of options menu
-        FILE *f = fdopen(newSock, "w+");
-        fflush(f);
+        send(newSock, optionsMenu, strlen(optionsMenu), 0);
+        // read input from client
+        char exampleRes = '1';
+        int sizeBuff = sizeof(exampleRes);
+		int n_recv = recv(newSock, clientMessage, 1024, 0);
+        if(n_recv != sizeBuff) {
+            break;
+        }
+		cout << "Client Response: ";
+		cout << clientMessage << endl;
+		bool end = false;
+        
+        switch(clientMessage[0]) {
+            case '1': 
+            {
+                option_one(newSock, sense_hat_choice);
+            } break;
+            case '2': 
+            {
+                option_two(newSock, sense_hat_choice);
+            } break;
+            case '3': 
+            {
+                option_three(newSock, sense_hat_choice);
+            } break;
+            case '4': 
+            {
+                option_four(newSock, sense_hat_choice);
+            } break;
+            case '5': 
+            {
+                end = true;
+                option_five(newSock);
+            } break;
+            default:
+            {
+                cerr << "Invalid input" << endl;
+            } break;
+        }
+        if(end)
+            break;
+	}
+}
+
+void *emu_clientHandler(void *arg)
+{
+    
+	int newSock = *((int*)arg);
+	char* optionsMenu = "Sense Hat Menu\n---------\n1. Get Temperature\n2. Get Pressure\n3. Get Humidity\n4. Set Message\n5. Exit\n";
+	char clientMessage[1024] = {0};
+
+	while(1){
+        const int sense_hat_choice = 1;
+        
         send(newSock, optionsMenu, strlen(optionsMenu), 0);
         // read input from client
         char exampleRes = '1';

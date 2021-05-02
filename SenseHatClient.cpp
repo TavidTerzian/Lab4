@@ -54,16 +54,6 @@ int main(int argc, char * argv[])
     while(result == 0) {
         char bigBuffer[3000] = {0};
         
-        /* get sense hat choice question */
-        // read in buffer
-        read(sockfd, buffer, 1024);
-        // print buffer to client console
-        cout << buffer << endl;
-        // get client response
-        scanf("%s", clientReply);
-        // send sense hat choice to server
-        send(sockfd, clientReply, strlen(clientReply), 0);
-        
         /* get options menu */
         // read in buffer
         read(sockfd, buffer, 1024);
