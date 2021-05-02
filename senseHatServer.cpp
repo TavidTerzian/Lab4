@@ -26,11 +26,19 @@ double getPressure(PyObject *pModule);
 double getHumidity(PyObject *pModule);
 void sendMessage(PyObject *pModule, const char* message);
 
-int main()
+int main(int argc, char * argv[])
 {
+    if(argc != 3){
+        printf("Error: Please provide an IP and Port\n");
+        exit(EXIT_FAILURE);
+    }
+
     Py_Initialize();
 
     int arg;
+    char* argIpAddress = argv[1];
+    const char* serverIpAddress = argIpAddress;
+    int argPort = atoi(argv[2]);
     int server_sockfd;
     int client_sockfd;
     int new_sockfd; // file descriptor vars
@@ -41,7 +49,8 @@ int main()
     pthread_t a_thread;
     // size of client address - must be socklen_t data type
     socklen_t client_address_size;
-    char buffer[1024] = {0};    
+    char buffer[1024] = {0};
+    
     
 /*  Remove any old socket and create an unnamed socket for the server.  */
 
@@ -54,8 +63,9 @@ int main()
 /*  Name the socket.  */
     // assign socket addr fields to server addr
     server_address.sin_family = AF_INET;
-    server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_address.sin_port = htons(5000);
+    //server_address.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_address.sin_port = (unsigned short)htons(argPort);
+    inet_pton(AF_INET, argIpAddress, &server_address.sin_addr);
     server_len = sizeof(server_address);
     // bind server addr to socket
 
