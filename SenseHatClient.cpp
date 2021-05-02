@@ -65,8 +65,20 @@ int main(int argc, char * argv[])
                 send(sockfd, clientReply, strlen(clientReply), 0);
                 read(sockfd, bigBuffer, 3000);
                 cout << bigBuffer << endl;
-                scanf("%s", clientReply);
-                send(sockfd, clientReply, strlen(clientReply), 0);
+
+                // client sensehat msg vars
+                int msgMaxLen = 300;
+                char charMessage[msgMaxLen];
+                size_t charMessageLen;
+                int N;
+                
+                // flush stdin before reading w fgets
+                scanf("%d *[^\n]", &N);
+                char* res_fgets = fgets(charMessage, msgMaxLen, stdin);
+                if(res_fgets != NULL){
+                    const char* charMessagePtr = charMessage;
+                    send(sockfd, charMessage, strlen(charMessage), 0);
+                }
             }
             else
             {

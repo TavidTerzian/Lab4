@@ -37,7 +37,6 @@ int main(int argc, char * argv[])
 
     int arg;
     char* argIpAddress = argv[1];
-    const char* serverIpAddress = argIpAddress;
     int argPort = atoi(argv[2]);
     int server_sockfd;
     int client_sockfd;
