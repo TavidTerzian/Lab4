@@ -15,16 +15,17 @@
 #include <Python.h>
 using namespace std; // so can use string 
 
-void option_one(int fd);
-void option_two(int fd);
-void option_three(int fd);
-void option_four(int fd);
+void option_one(int fd, int sense_hat_choice);
+void option_two(int fd, int sense_hat_choice);
+void option_three(int fd, int sense_hat_choice);
+void option_four(int fd, int sense_hat_choice);
 void option_five(int fds);
 void *clientHandler(void* arg);
-double getTemperature(PyObject *pModule);
-double getPressure(PyObject *pModule);
-double getHumidity(PyObject *pModule);
-void sendMessage(PyObject *pModule, const char* message);
+double getTemperature(PyObject *pModule, int sense_hat_choice);
+double getPressure(PyObject *pModule, int sense_hat_choice);
+double getHumidity(PyObject *pModule, int sense_hat_choice);
+void sendMessage(PyObject *pModule, const char* message, int sense_hat_choice);
+
 
 int main(int argc, char * argv[])
 {
@@ -50,6 +51,7 @@ int main(int argc, char * argv[])
     socklen_t client_address_size;
     char buffer[1024] = {0};
     
+    //int sense_hat_choice = 1;
     
 /*  Remove any old socket and create an unnamed socket for the server.  */
 
@@ -98,11 +100,22 @@ int main(int argc, char * argv[])
 
 void *clientHandler(void *arg)
 {
+    
 	int newSock = *((int*)arg);
 	char* optionsMenu = "Sense Hat Menu\n---------\n1. Get Temperature\n2. Get Pressure\n3. Get Humidity\n4. Set Message\n5. Exit\n";
 	char clientMessage[1024] = {0};
 
 	while(1){
+        char sense_hat_choice = 1;
+        char tempChar[1] = {'1'};
+        char* senseHatChoiceMsg = "Please enter 0 if using an actual physical sense hat\nOr enter 1 if using a sense hat emulator";
+        send(newSock, senseHatChoiceMsg, strlen(senseHatChoiceMsg), 0);
+        recv(newSock, tempChar, 1024, 0);
+        sense_hat_choice = (int)(tempChar[0]);
+        
+        // flush socket before sending message of options menu
+        FILE *f = fdopen(newSock, "w+");
+        fflush(f);
         send(newSock, optionsMenu, strlen(optionsMenu), 0);
         // read input from client
         char exampleRes = '1';
@@ -118,19 +131,19 @@ void *clientHandler(void *arg)
         switch(clientMessage[0]) {
             case '1': 
             {
-                option_one(newSock);
+                option_one(newSock, sense_hat_choice);
             } break;
             case '2': 
             {
-                option_two(newSock);
+                option_two(newSock, sense_hat_choice);
             } break;
             case '3': 
             {
-                option_three(newSock);
+                option_three(newSock, sense_hat_choice);
             } break;
             case '4': 
             {
-                option_four(newSock);
+                option_four(newSock, sense_hat_choice);
             } break;
             case '5': 
             {
@@ -147,7 +160,7 @@ void *clientHandler(void *arg)
 	}
 }
 
-void option_one(int fd) {
+void option_one(int fd, int sense_hat_choice) {
     PyObject *sys = PyImport_ImportModule("sys");
     PyObject *path = PyObject_GetAttrString(sys, "path");
     PyList_Append(path, PyUnicode_FromString("."));
@@ -160,7 +173,7 @@ void option_one(int fd) {
     if (pModule == NULL) {
         PyErr_Print();
     }
-    string tempString = "Temperature: " + std::to_string(getTemperature(pModule));
+    string tempString = "Temperature: " + std::to_string(getTemperature(pModule, sense_hat_choice));
     const char* message = tempString.c_str();
     char* mod_message = strdup(message);
     if(send(fd, mod_message, strlen(mod_message), 0) < 0) {
@@ -170,7 +183,7 @@ void option_one(int fd) {
     sleep(1.5);
 }
 
-void option_two(int fd) {
+void option_two(int fd, int sense_hat_choice) {
     PyObject *sys = PyImport_ImportModule("sys");
     PyObject *path = PyObject_GetAttrString(sys, "path");
     PyList_Append(path, PyUnicode_FromString("."));
@@ -183,7 +196,7 @@ void option_two(int fd) {
     if (pModule == NULL) {
         PyErr_Print();
     }
-    string tempString = "Pressure: " + std::to_string(getPressure(pModule));
+    string tempString = "Pressure: " + std::to_string(getPressure(pModule, sense_hat_choice));
     const char* message = tempString.c_str();
     char* mod_message = strdup(message);
     if(send(fd, mod_message, strlen(mod_message), 0) < 0) {
@@ -193,7 +206,7 @@ void option_two(int fd) {
     sleep(1.5);
 }
 
-void option_three(int fd) {
+void option_three(int fd, int sense_hat_choice) {
     PyObject *sys = PyImport_ImportModule("sys");
     PyObject *path = PyObject_GetAttrString(sys, "path");
     PyList_Append(path, PyUnicode_FromString("."));
@@ -206,7 +219,7 @@ void option_three(int fd) {
     if (pModule == NULL) {
         PyErr_Print();
     }
-    string tempString = "Humidity: " + std::to_string(getHumidity(pModule));
+    string tempString = "Humidity: " + std::to_string(getHumidity(pModule, sense_hat_choice));
     const char* message = tempString.c_str();
     char* mod_message = strdup(message);
     if(send(fd, mod_message, strlen(mod_message), 0) < 0) {
@@ -216,7 +229,7 @@ void option_three(int fd) {
     sleep(1.5);
 }
 
-void option_four(int fd) {
+void option_four(int fd, int sense_hat_choice) {
     char bigBuffer[3000] = {0};
     PyObject *sys = PyImport_ImportModule("sys");
     PyObject *path = PyObject_GetAttrString(sys, "path");
@@ -234,7 +247,7 @@ void option_four(int fd) {
     send(fd, title, strlen(title), 0);
     read(fd, bigBuffer, 3000);
     cout << "Debug: Message from client = " << bigBuffer << endl;
-    sendMessage(pModule, bigBuffer);
+    sendMessage(pModule, bigBuffer, sense_hat_choice);
     sleep(1.5);
 }
 
@@ -245,12 +258,18 @@ void option_five(int fd) {
     pthread_exit(NULL);
 }
 
-double getTemperature(PyObject *pModule)
+double getTemperature(PyObject *pModule, int sense_hat_choice)
 {
 
     double temperature = 0.0;
-
-    PyObject *pFunc = PyObject_GetAttrString(pModule, "getTemperature");
+    // must set a default GetAttrString
+    PyObject *pFunc = PyObject_GetAttrString(pModule, "emu_getTemperature");
+    if(sense_hat_choice == 1){
+        pFunc = PyObject_GetAttrString(pModule, "emu_getTemperature");
+    }
+    else if(sense_hat_choice == 0) {
+        pFunc = PyObject_GetAttrString(pModule, "getTemperature");
+    }
     if (pFunc && PyCallable_Check(pFunc)) {
         PyObject *pValue = PyObject_CallObject(pFunc, NULL);
 	temperature = PyFloat_AsDouble(pValue);
@@ -265,12 +284,17 @@ double getTemperature(PyObject *pModule)
 
 }
 
-double getPressure(PyObject *pModule)
+double getPressure(PyObject *pModule, int sense_hat_choice)
 {
-
     double pressure = 0.0;
 
-    PyObject *pFunc = PyObject_GetAttrString(pModule, "getPressure");
+    PyObject *pFunc = PyObject_GetAttrString(pModule, "emu_getPressure");
+    if(sense_hat_choice == 1){
+        pFunc = PyObject_GetAttrString(pModule, "emu_getPressure");
+    }
+    else if(sense_hat_choice == 0) {
+        pFunc = PyObject_GetAttrString(pModule, "getPressure");
+    }
     if (pFunc && PyCallable_Check(pFunc)) {
         PyObject *pValue = PyObject_CallObject(pFunc, NULL);
 	pressure = PyFloat_AsDouble(pValue);
@@ -285,12 +309,18 @@ double getPressure(PyObject *pModule)
 
 }
 
-double getHumidity(PyObject *pModule)
+double getHumidity(PyObject *pModule, int sense_hat_choice)
 {
 
     double humidity = 0.0;
 
-    PyObject *pFunc = PyObject_GetAttrString(pModule, "getHumidity");
+    PyObject *pFunc = PyObject_GetAttrString(pModule, "emu_getHumidity");
+    if(sense_hat_choice == 1){
+        pFunc = PyObject_GetAttrString(pModule, "emu_getHumidity");
+    }
+    else if(sense_hat_choice == 0) {
+        pFunc = PyObject_GetAttrString(pModule, "getHumidity");
+    }
     if (pFunc && PyCallable_Check(pFunc)) {
         PyObject *pValue = PyObject_CallObject(pFunc, NULL);
 	humidity = PyFloat_AsDouble(pValue);
@@ -304,10 +334,16 @@ double getHumidity(PyObject *pModule)
     return humidity;
 
 }
-void sendMessage(PyObject *pModule, const char* message)
+void sendMessage(PyObject *pModule, const char* message, int sense_hat_choice)
 {
     double worked;
     PyObject *pFunc = PyObject_GetAttrString(pModule, "sendMsg");
+    if(sense_hat_choice == 1){
+        pFunc = PyObject_GetAttrString(pModule, "emu_sendMsg");
+    }
+    else if(sense_hat_choice == 0) {
+        pFunc = PyObject_GetAttrString(pModule, "sendMsg");
+    }
     // attr - temp static argument to pass to Python sendMessage
     PyObject *stringObjectArg = PyBytes_FromStringAndSize(message, sizeof(message) * 2);
     if (pFunc && PyCallable_Check(pFunc)) {
